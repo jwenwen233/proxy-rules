@@ -49,6 +49,7 @@ def test_general_uses_proxied_browsing_dns_and_reachable_node_bootstrap():
     assert general["dns-direct-system"] == "false"
     assert general["ipv6"] == "false"
     assert general["prefer-ipv6"] == "false"
+    assert general["always-ip-address"] == "true"
     assert general["udp-policy-not-supported-behaviour"] == "REJECT"
     assert "system" not in general["dns-server"]
     assert "system" not in general["fallback-dns-server"]
