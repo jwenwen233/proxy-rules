@@ -43,6 +43,13 @@ proxy-rules/
 │   │   ├── anthropic.yaml
 │   │   ├── openai.yaml
 │   │   └── openai-voice.yaml
+│   ├── upstream/
+│   │   ├── cn-domain.yaml
+│   │   ├── cn-ip.yaml
+│   │   ├── reject-domain.yaml
+│   │   ├── media-domain.yaml
+│   │   ├── messaging-domain.yaml
+│   │   └── apple-microsoft-domain.yaml
 │   └── upstream.lock.json
 ├── dist/
 │   ├── shadowrocket/
@@ -111,7 +118,7 @@ The repository is licensed GPL-3.0 and preserves source attribution in the READM
 - OpenAI's official ChatGPT network recommendations are authoritative for ChatGPT, OpenAI, WebSocket, file, app, and voice destinations.
 - Net.Coffee's Claude list is supplemental. Entries are accepted only when they do not create an unsafe broad match and are not contradicted by official documentation.
 
-`sync_upstreams.py` records the upstream URL, retrieval timestamp, and content SHA-256 in `source/upstream.lock.json`. Generated output is reproducible from the locked inputs.
+`sync_upstreams.py` normalizes downloaded data into tracked snapshots under `source/upstream/` and records the upstream URL, retrieval timestamp, raw SHA-256, and normalized SHA-256 in `source/upstream.lock.json`. Ordinary builds read only the tracked snapshots and therefore work offline. Updating upstream data is a separate explicit operation that updates the snapshots and lock together, making every committed generated output reproducible even after an upstream branch changes.
 
 ## 7. Policy Groups
 
