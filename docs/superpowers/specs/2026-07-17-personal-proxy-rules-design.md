@@ -55,16 +55,17 @@ proxy-rules/
 │   │   └── cn.list
 │   └── mihomo/
 │       ├── direct.yaml
-│       ├── reject.yaml
+│       ├── reject-domain.yaml
 │       ├── ai.yaml
-│       ├── openai-voice.yaml
+│       ├── openai-voice-ip.yaml
 │       ├── media.yaml
 │       ├── messaging.yaml
 │       ├── apple-microsoft.yaml
-│       └── cn.yaml
+│       ├── cn-domain.yaml
+│       └── cn-ip.yaml
 ├── configs/
 │   ├── shadowrocket.conf
-│   └── clash-verge-merge.js
+│   └── clash-verge-script.js
 ├── scripts/
 │   ├── sync_upstreams.py
 │   ├── build_rules.py
@@ -92,9 +93,12 @@ rules:
     value: browser-intake-us5-datadoghq.com
   - type: ip-cidr
     value: 160.79.104.0/21
+  - type: process-name
+    value: ToDesk
+    targets: [mihomo]
 ```
 
-Supported canonical types are `domain`, `domain-suffix`, `domain-keyword`, `ip-cidr`, `ip-asn`, and `process-name`. Generation converts the same canonical record into Shadowrocket list syntax and Mihomo rule-provider YAML.
+Supported canonical types are `domain`, `domain-suffix`, `domain-keyword`, `ip-cidr`, `ip-asn`, and `process-name`. Records apply to both clients unless an explicit `targets` list limits them. This is required because Mihomo supports process-name routing while iOS Shadowrocket does not provide equivalent process matching. Generation converts each record only for compatible targets and fails rather than silently dropping an unsupported shared record.
 
 Broad `domain-keyword` entries are disallowed by default because they commonly route unrelated sites. A keyword requires an explicit allow entry in the validator configuration and a comment explaining the scope.
 
@@ -111,17 +115,19 @@ The repository is licensed GPL-3.0 and preserves source attribution in the READM
 
 ## 7. Policy Groups
 
-Both clients expose equivalent logical groups:
+Both clients expose equivalent logical groups. Stable internal names use a `PRX-` prefix to minimize collisions with airport node names. The README explains each ASCII group name; rule references and displayed group names stay identical.
 
-- `Manual`: all usable imported nodes, excluding quota, expiry, website, and informational entries.
-- `Auto`: URL-test over all usable imported nodes.
-- `AI`: select between `Manual` and `Auto`; no `DIRECT` option.
-- `Media`: select between `Manual` and `Auto`.
-- `Messaging`: select between `Manual` and `Auto`.
-- `Apple-Microsoft`: select between `DIRECT`, `Manual`, and `Auto`; default is `DIRECT`.
-- `Proxy`: select between `Manual` and `Auto`; this is the final overseas policy.
+- `PRX-Manual`: all usable imported nodes, excluding quota, expiry, website, and informational entries.
+- `PRX-Auto`: URL-test over all usable imported nodes.
+- `PRX-AI`: select between `PRX-Manual` and `PRX-Auto`; no `DIRECT` option.
+- `PRX-Media`: select between `PRX-Manual` and `PRX-Auto`.
+- `PRX-Messaging`: select between `PRX-Manual` and `PRX-Auto`.
+- `PRX-Apple-Microsoft`: select between `DIRECT`, `PRX-Manual`, and `PRX-Auto`; default is `DIRECT`.
+- `PRX-Proxy`: select between `PRX-Manual` and `PRX-Auto`; this is the final overseas policy.
 
-The generated files may display localized emoji names, but internal generation and tests use stable ASCII identifiers. The Clash enhancement script discovers proxies and proxy providers from the active airport profile and rebuilds these groups without copying credentials. The Shadowrocket configuration uses dynamic policy filters so separately imported nodes remain available after changing subscriptions.
+For Mihomo, `PRX-Manual` and `PRX-Auto` use `include-all: true` plus exclusion filters. This includes both inline proxies and proxy providers without including other proxy groups. The enhancement script rejects an airport profile containing a proxy, group, or rule provider with a reserved `PRX-*` name instead of producing an ambiguous configuration. It preserves non-reserved airport groups because chained nodes may refer to them, while the new routing rules reference only the repository's groups.
+
+For Shadowrocket, dynamic `policy-regex-filter` groups draw from nodes already imported on the home page. A user imports or changes subscriptions independently, then applies the rules configuration. The device acceptance test must verify this behavior against the installed Shadowrocket version and two separate subscriptions; if a future app version changes this behavior, the documented fallback is to enable the subscription selector for each group in the UI without editing routing or DNS rules.
 
 ## 8. Rule Precedence
 
@@ -130,12 +136,12 @@ Rules are evaluated in this fixed order:
 1. Loopback, LAN, private ranges, captive portal, and essential system connectivity: `DIRECT`.
 2. ToDesk processes/domains and `scnet.cn`: `DIRECT`.
 3. Advertising, tracking, hijacking, and known malicious destinations: `REJECT`.
-4. Claude, Anthropic, ChatGPT, OpenAI, and their required exact infrastructure destinations: `AI`.
-5. Telegram and Discord: `Messaging`.
-6. Streaming services: `Media`.
-7. Apple and Microsoft: `Apple-Microsoft`.
+4. Claude, Anthropic, ChatGPT, OpenAI, and their required exact infrastructure destinations: `PRX-AI`.
+5. Telegram and Discord: `PRX-Messaging`.
+6. Streaming services: `PRX-Media`.
+7. Apple and Microsoft: `PRX-Apple-Microsoft`.
 8. China domains and China IP ranges: `DIRECT`.
-9. Everything else: `Proxy`.
+9. Everything else: `PRX-Proxy`.
 
 IP rules use `no-resolve` where supported. Domain rules precede IP rules. The final policy is always proxy rather than direct.
 
@@ -155,7 +161,7 @@ The AI set includes the official core families and specific supplemental endpoin
 - Exact CDN, authentication, telemetry, and content endpoints that are verified as Anthropic dependencies
 - Anthropic-owned IPv4/ASN fallback records when independently verified
 
-Shared infrastructure such as all of `sentry.io`, all Datadog domains, all Intercom domains, `storage.googleapis.com`, and `raw.githubusercontent.com` is not assigned to AI by a broad keyword. It is still proxied by the final `Proxy` policy. Exact endpoints may be assigned to AI when official documentation identifies them.
+Shared infrastructure such as all of `sentry.io`, all Datadog domains, all Intercom domains, `storage.googleapis.com`, and `raw.githubusercontent.com` is not assigned to AI by a broad keyword. It is still proxied by the final `PRX-Proxy` policy. Exact endpoints may be assigned to AI when official documentation identifies them.
 
 ### OpenAI and ChatGPT
 
@@ -169,31 +175,36 @@ The AI set includes official OpenAI families and exact dependencies, including:
 - `oaistatsig.com`
 - Official authentication, WorkOS, app, WebSocket, upload, and exact telemetry endpoints
 
-ChatGPT Voice IP ranges are synchronized from OpenAI's maintained `chatgpt-voice.json` and routed to `AI` for UDP port 3478. If the voice list cannot update, the previous validated list remains in `dist`; the build does not replace it with an empty file.
+ChatGPT Voice IP ranges are synchronized from OpenAI's maintained `chatgpt-voice.json` and routed to `PRX-AI`. The dedicated OpenAI ranges are routed as a whole instead of trying to combine an external IP-only rule provider with a port-3478 condition, because that compound form is not represented consistently by both clients. If the voice list cannot update, the previous validated list remains in `dist`; the build does not replace it with an empty file.
 
 ## 10. DNS and Leak Prevention
 
 ### Shadowrocket
 
-- Primary and fallback DNS: Cloudflare DoH with `#proxy`.
+- `dns-server = https://1.1.1.1/dns-query#proxy`.
+- `fallback-dns-server = https://1.0.0.1/dns-query#proxy`; it remains inside the proxy path and never names `system`.
 - `dns-direct-system = false`.
-- `dns-fallback-system = false`.
 - `ipv6 = false` and `prefer-ipv6 = false`.
-- Hard-coded common DNS destinations are hijacked where supported.
-- Node hostname bootstrap uses encrypted DoH without system DNS.
-- Unsupported UDP behavior is `REJECT`, preventing silent direct fallback while retaining UDP for capable nodes.
+- `use-local-host-item-for-proxy = false`, preventing a local hosts entry from replacing a proxied hostname.
+- `hijack-dns = 8.8.8.8:53,8.8.4.4:53` captures common hard-coded plain-DNS destinations.
+- `proxy-dns-server = https://1.1.1.1/dns-query` resolves node hostnames by direct encrypted bootstrap without using system DNS. It is intentionally not marked `#proxy`, because the node hostname must be resolved before the proxy tunnel can exist.
+- `udp-policy-not-supported-behaviour = REJECT`, preventing silent direct fallback while retaining UDP for capable nodes.
+
+`dns-fallback-system` is not emitted because it is not a documented Shadowrocket key. Preventing system fallback is achieved by explicitly configuring `fallback-dns-server` to a proxied DoH endpoint and never setting it to `system` or an empty value.
 
 ### Clash Verge Rev/Mihomo
 
 The global enhancement script overrides DNS and relevant TUN fields while preserving application-controlled ports and service settings:
 
 - DNS enabled, IPv6 disabled, `fake-ip` enhanced mode.
-- `respect-rules: true`.
+- `use-hosts: false` and `use-system-hosts: false`.
+- `respect-rules: true`, together with the required `proxy-server-nameserver`.
 - TUN DNS hijack includes `any:53`.
-- Ordinary nameservers and fallback use Cloudflare DoH explicitly routed through `Proxy`.
+- The sole ordinary resolver is the quoted YAML scalar `'https://1.1.1.1/dns-query#PRX-Proxy'`, explicitly routed through the repository's main proxy group. Quoting is mandatory because an unquoted `#` begins a YAML comment.
+- No `fallback` resolver is configured. Mihomo enables geo-filtered fallback behavior when that field exists, which would create unnecessary parallel or conditional queries for this strict single-path design.
 - No system nameserver is configured.
-- Proxy-server hostname bootstrap uses direct encrypted DoH to an IP-addressed resolver, avoiding a circular dependency before a proxy connection exists.
-- Fake-IP exclusions are limited to LAN discovery, captive portal, STUN-sensitive, and service-discovery names that require real addresses.
+- Both `default-nameserver` and `proxy-server-nameserver` use direct encrypted, IP-addressed DoH such as `https://1.1.1.1/dns-query`, avoiding a circular dependency before a proxy connection exists. These resolvers are only bootstrap paths for DoH server and node hostnames, not ordinary website queries.
+- Fake-IP exclusions are limited to LAN discovery, captive portal, and service-discovery names that require real addresses. Fake-IP filtering is not presented as a WebRTC/STUN leak control.
 
 Bootstrap DNS is a necessary exception for airport nodes whose server is specified by hostname: the proxy hostname must be resolved before a proxy tunnel exists. This bootstrap is encrypted and restricted to proxy-server hostnames. Ordinary website DNS continues through the proxy.
 
@@ -208,6 +219,8 @@ If a provider intentionally uses different TCP and UDP NAT pools, WebRTC tests c
 ## 12. Failure Handling
 
 - Rule providers update every 24 hours and retain the last valid cache.
+- Mihomo rule providers set `proxy: PRX-Proxy`, so remote rule downloads use the proxy after the embedded critical rules and groups are available.
+- Mihomo provider behavior matches the generated content: `domain` for domain-only sets, `ipcidr` for IP-only sets, and `classical` only for mixed rule types.
 - Upstream sync uses timeouts, schema checks, non-empty checks, and SHA-256 locking.
 - A failed or empty upstream never overwrites the last known-good generated file.
 - Critical LAN, AI, and final-routing rules are embedded in the client configuration so a first-run provider download failure cannot send AI traffic direct.
@@ -234,13 +247,15 @@ Automated tests cover:
 - Stable, deterministic output.
 - Duplicate and conflict detection.
 - Rule precedence and policy existence.
-- Claude and ChatGPT representative domains map to `AI`.
+- Claude and ChatGPT representative domains map to `PRX-AI`.
 - CN and private destinations map to `DIRECT`.
 - Advertising samples map to `REJECT`.
-- Unknown overseas domains reach final `Proxy`.
+- Unknown overseas domains reach final `PRX-Proxy`.
 - IPv6 and system-DNS fallback remain disabled.
 - No secrets exist in tracked files.
 - A fixture airport profile is enhanced without losing its proxies or proxy providers.
+- The Clash enhancement replaces, rather than prepends to, the airport's `rules`; this prevents an airport's earlier rules from shadowing the personal rules. It merges namespaced `PRX-*` rule providers and groups while preserving non-reserved airport `rule-providers`, `proxy-groups`, `proxies`, `proxy-providers`, ports, and unrelated runtime fields.
+- Inline proxies and proxy providers both populate `PRX-Manual` and `PRX-Auto` through `include-all: true`.
 - Mihomo validates a composed fixture configuration with its configuration-test command.
 
 Shadowrocket has no supported desktop CLI validator, so its tests parse sections, validate supported rule syntax, validate policy references, and compare generated records against golden fixtures. Final device verification is documented as a manual acceptance test.
@@ -252,7 +267,7 @@ For each client:
 1. Import a test airport subscription separately.
 2. Apply the generated configuration/enhancement.
 3. Confirm policy groups contain imported nodes.
-4. Confirm Claude and ChatGPT use `AI`.
+4. Confirm Claude and ChatGPT use `PRX-AI`.
 5. Confirm a representative CN site is direct and an unknown overseas site is proxied.
 6. Confirm ad samples are rejected.
 7. Confirm public HTTP egress matches the selected proxy.
@@ -264,7 +279,7 @@ For each client:
 
 The first implementation is developed and verified locally. Publication creates the public GitHub repository `jwenwen233/proxy-rules` only after the generated configuration contains no secrets and the user approves publication.
 
-GitHub Actions runs validation on pushes and pull requests. A scheduled workflow checks upstream rule changes daily, generates a reviewable diff, and commits only validated output. Client rule-provider URLs use the public repository's raw files and update every 24 hours.
+GitHub Actions runs validation on pushes and pull requests. A scheduled workflow checks upstream rule changes daily, generates a reviewable diff, and opens or updates a pull request after validation; it never pushes unattended changes directly to the default branch. Client rule-provider URLs use concrete `raw.githubusercontent.com/jwenwen233/proxy-rules/...` paths and update every 24 hours.
 
 ## 17. Acceptance Criteria
 
