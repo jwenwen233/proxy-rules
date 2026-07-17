@@ -40,12 +40,12 @@ def _index(rules: list[str], rule: str) -> int:
     return rules.index(rule)
 
 
-def test_general_uses_proxy_only_encrypted_dns_and_safe_network_defaults():
+def test_general_uses_proxied_browsing_dns_and_reachable_node_bootstrap():
     general = _general(_sections()["General"])
 
     assert general["dns-server"] == "https://1.1.1.1/dns-query#proxy"
     assert general["fallback-dns-server"] == "https://1.0.0.1/dns-query#proxy"
-    assert general["proxy-dns-server"] == "https://1.1.1.1/dns-query"
+    assert general["proxy-dns-server"] == "223.5.5.5"
     assert general["dns-direct-system"] == "false"
     assert general["ipv6"] == "false"
     assert general["prefer-ipv6"] == "false"
