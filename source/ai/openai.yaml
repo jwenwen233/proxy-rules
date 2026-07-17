@@ -1,0 +1,20 @@
+version: 1
+rules:
+  - {type: domain-suffix, value: openai.com}
+  - {type: domain-suffix, value: chatgpt.com}
+  - {type: domain-suffix, value: oaistatic.com}
+  - {type: domain-suffix, value: oaiusercontent.com}
+  - {type: domain-suffix, value: oaistatsig.com}
+  - {type: domain-suffix, value: openaimerge.com}
+  - {type: domain, value: cdn.workos.com}
+  - {type: domain, value: forwarder.workos.com}
+  - {type: domain, value: humb.apple.com}
+  - {type: domain, value: images.workoscdn.com}
+  - {type: domain, value: js.intercomcdn.com}
+  - {type: domain, value: js.stripe.com}
+  - {type: domain, value: o207216.ingest.sentry.io}
+  - {type: domain, value: o33249.ingest.sentry.io}
+  - {type: domain, value: rum.browser-intake-datadoghq.com}
+  - {type: domain, value: setup.workos.com}
+  - {type: domain, value: workos.imgix.net}
+  - {type: domain, value: challenges.cloudflare.com}

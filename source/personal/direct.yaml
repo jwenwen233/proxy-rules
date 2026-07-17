@@ -1,0 +1,6 @@
+version: 1
+rules:
+  - {type: domain-suffix, value: todesk.com}
+  - {type: domain-suffix, value: todesk.cn}
+  - {type: domain-suffix, value: scnet.cn}
+  - {type: process-name, value: ToDesk, targets: [mihomo]}

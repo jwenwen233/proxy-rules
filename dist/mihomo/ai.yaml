@@ -1,0 +1,27 @@
+payload:
+- DOMAIN,cdn.workos.com
+- DOMAIN,challenges.cloudflare.com
+- DOMAIN,forwarder.workos.com
+- DOMAIN,humb.apple.com
+- DOMAIN,images.workoscdn.com
+- DOMAIN,js.intercomcdn.com
+- DOMAIN,js.stripe.com
+- DOMAIN,o207216.ingest.sentry.io
+- DOMAIN,o33249.ingest.sentry.io
+- DOMAIN,rum.browser-intake-datadoghq.com
+- DOMAIN,setup.workos.com
+- DOMAIN,workos.imgix.net
+- DOMAIN-SUFFIX,anthropic.com
+- DOMAIN-SUFFIX,chatgpt.com
+- DOMAIN-SUFFIX,clau.de
+- DOMAIN-SUFFIX,claude.ai
+- DOMAIN-SUFFIX,claude.com
+- DOMAIN-SUFFIX,claudemcpclient.com
+- DOMAIN-SUFFIX,claudemcpcontent.com
+- DOMAIN-SUFFIX,claudeusercontent.com
+- DOMAIN-SUFFIX,oaistatic.com
+- DOMAIN-SUFFIX,oaistatsig.com
+- DOMAIN-SUFFIX,oaiusercontent.com
+- DOMAIN-SUFFIX,openai.com
+- DOMAIN-SUFFIX,openaimerge.com
+- IP-CIDR,160.79.104.0/21,no-resolve
