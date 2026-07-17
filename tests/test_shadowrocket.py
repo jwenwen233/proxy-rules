@@ -129,3 +129,10 @@ def test_config_is_node_free_and_uses_only_public_repository_rule_urls():
     ]
     assert rule_urls
     assert all(url.startswith(RAW_PREFIX) for url in rule_urls)
+    generated_dir = CONFIG.parents[1] / "dist/shadowrocket"
+    missing_files = [
+        generated_dir / url.removeprefix(RAW_PREFIX)
+        for url in rule_urls
+        if not (generated_dir / url.removeprefix(RAW_PREFIX)).is_file()
+    ]
+    assert not missing_files, f"missing generated rule files: {missing_files}"
