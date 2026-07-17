@@ -1,6 +1,8 @@
 from pathlib import Path
+import re
 
 import pytest
+import yaml
 
 from scripts.lib.model import Rule
 from scripts.lib.generate import build_all
@@ -158,3 +160,76 @@ def test_repository_validator_aggregates_findings_in_order(tmp_path: Path):
     assert "credential.txt: proxy URI" in findings
     assert any("source/personal/direct.yaml" in finding for finding in findings)
     assert findings == sorted(findings)
+
+
+def test_readme_has_operating_sections():
+    repo_root = Path(__file__).parents[1]
+    text = (repo_root / "README.md").read_text(encoding="utf-8")
+    required = [
+        "## Shadowrocket 安装",
+        "## Clash Verge Rev 安装",
+        "## 更换机场",
+        "## DNS 检测结果怎么读",
+        "## WebRTC 检测结果怎么读",
+        "## 回滚",
+        "python3 scripts/build_rules.py --check",
+        "python3 scripts/validate.py",
+    ]
+    assert all(item in text for item in required)
+
+
+def test_license_is_unmodified_gpl_v3_text():
+    text = (Path(__file__).parents[1] / "LICENSE").read_text(encoding="utf-8")
+    assert text.startswith("                    GNU GENERAL PUBLIC LICENSE\n")
+    assert "Version 3, 29 June 2007" in text
+    assert text.rstrip().endswith("<https://www.gnu.org/licenses/why-not-lgpl.html>.")
+
+
+def test_validation_workflow_is_pinned_least_privilege_and_reproducible():
+    text = (Path(__file__).parents[1] / ".github/workflows/validate.yml").read_text(
+        encoding="utf-8"
+    )
+    workflow = yaml.safe_load(text)
+    triggers = workflow.get("on", workflow.get(True))  # PyYAML 1.1 parses `on` as True.
+
+    assert {"push", "pull_request", "schedule"} <= set(triggers)
+    assert triggers["schedule"] == [{"cron": "17 3 * * *"}]
+    assert workflow["permissions"] == {"contents": "read"}
+
+    jobs = workflow["jobs"]
+    scheduled = jobs["scheduled-update"]
+    assert scheduled["permissions"] == {
+        "contents": "write",
+        "pull-requests": "write",
+    }
+    assert all("permissions" not in job for name, job in jobs.items() if name != "scheduled-update")
+
+    expected_actions = {
+        "actions/checkout": "34e114876b0b11c390a56381ad16ebd13914f8d5",
+        "actions/setup-python": "a26af69be951a213d495a4c3e4e4022e16d87065",
+        "actions/setup-node": "49933ea5288caeca8642d1e84afbd3f7d6820020",
+        "peter-evans/create-pull-request": "22a9089034f40e5a961c8808d113e2c98fb63676",
+    }
+    for action, sha in expected_actions.items():
+        assert f"uses: {action}@{sha}" in text
+    assert all(re.fullmatch(r"[\w./-]+@[0-9a-f]{40}(?:\s+#.*)?", value.strip())
+               for value in re.findall(r"^\s*uses:\s*(.+)$", text, re.MULTILINE))
+
+    assert "https://github.com/MetaCubeX/mihomo/releases/download/v1.19.28/mihomo-linux-amd64-compatible-v1.19.28.gz" in text
+    assert "70d01cfb8cb7bf7a92fd1af16cb4b9553d90bb4eecde3b5c4849103e27c80ddb" in text
+    for command in (
+        "python -m pip install -e '.[dev]'",
+        "pytest -q",
+        "node --test tests/test_clash_script.cjs",
+        "python scripts/build_rules.py --check",
+        "python scripts/validate.py",
+        "python scripts/sync_upstreams.py --update",
+        "gzip -dc .cache/mihomo.gz > .cache/mihomo",
+        ".cache/mihomo -t -f .cache/test-config.yaml",
+    ):
+        assert command in text
+    create_pr = next(step["with"] for step in scheduled["steps"]
+                     if step.get("uses", "").startswith("peter-evans/create-pull-request@"))
+    assert "python scripts/build_rules.py" in [step.get("run") for step in scheduled["steps"]]
+    assert create_pr["branch"] == "automation/update-rules"
+    assert create_pr["title"] == "chore: update upstream rules"
