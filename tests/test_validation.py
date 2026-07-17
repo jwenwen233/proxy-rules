@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from scripts.lib.model import Rule
+from scripts.lib.generate import build_all
 from scripts.lib.validation import (
     ValidationError,
     resolve_policy,
@@ -46,8 +47,24 @@ def test_secret_scanner_rejects_credential_shaped_url_queries(tmp_path: Path):
     assert scan_secrets(tmp_path)
 
 
+@pytest.mark.parametrize("secret", [
+    "pass" + "word: abc",
+    "Private-" + "Key: abc",
+    "?" + "token=abc",
+])
+def test_secret_scanner_rejects_short_non_empty_credentials(tmp_path: Path, secret: str):
+    (tmp_path / "short-credential.txt").write_text(secret)
+    assert scan_secrets(tmp_path)
+
+
+@pytest.mark.parametrize("control", (b"\x01", b"\x7f"))
+def test_secret_scanner_skips_binary_files_with_secret_shaped_ascii(tmp_path: Path, control: bytes):
+    (tmp_path / "binary.dat").write_bytes(control + b"pass" + b"word: abc")
+    assert scan_secrets(tmp_path) == []
+
+
 def test_secret_scanner_skips_its_excluded_directories(tmp_path: Path):
-    for directory in (".git", "work", ".cache", ".pytest_cache", "docs/superpowers"):
+    for directory in (".git", ".superpowers", "work", ".cache", ".pytest_cache", "docs/superpowers"):
         path = tmp_path / directory / "credential.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("vless:" + "//00000000-0000-0000-0000-000000000000@example.com:443")
@@ -66,6 +83,23 @@ def test_precedence_routes_required_destinations():
     assert resolve_policy("192.168.1.1", named_sets) == "DIRECT"
     assert resolve_policy("ads.example", named_sets) == "REJECT"
     assert resolve_policy("example.net", named_sets) == "PRX-Proxy"
+
+
+def test_precedence_routes_critical_ai_dependencies_before_reject():
+    destination = "o33249.ingest.sentry.io"
+    named_sets = {
+        "reject": [Rule("domain", destination)],
+        "ai": [Rule("domain", destination)],
+    }
+    assert resolve_policy(destination, named_sets) == "PRX-AI"
+
+
+def _write_generated_outputs(root: Path) -> dict[Path, str]:
+    expected = build_all(root)
+    for path, content in expected.items():
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+    return expected
 
 
 def test_generated_file_validator_reports_stale_content(tmp_path: Path):
@@ -90,6 +124,30 @@ def test_generated_file_validator_reports_stale_content(tmp_path: Path):
     (tmp_path / "dist/shadowrocket/direct.list").write_text("stale\n")
     assert any("stale generated file: dist/shadowrocket/direct.list" == error
                for error in validate_generated_files(tmp_path))
+
+
+def test_generated_file_validator_reports_invalid_utf8(tmp_path: Path):
+    sources = {
+        "source/personal/direct.yaml": "version: 1\nrules:\n  - {type: domain-suffix, value: example.cn}\n",
+        "source/personal/reject.yaml": "version: 1\nrules: []\n",
+        "source/ai/anthropic.yaml": "version: 1\nrules: []\n",
+        "source/ai/openai.yaml": "version: 1\nrules: []\n",
+        "source/ai/openai-voice.yaml": "version: 1\nrules: []\n",
+        "source/upstream/reject-domain.yaml": "version: 1\nrules: []\n",
+        "source/upstream/media-domain.yaml": "version: 1\nrules: []\n",
+        "source/upstream/messaging-domain.yaml": "version: 1\nrules: []\n",
+        "source/upstream/apple-microsoft-domain.yaml": "version: 1\nrules: []\n",
+        "source/upstream/cn-domain.yaml": "version: 1\nrules: []\n",
+        "source/upstream/cn-ip.yaml": "version: 1\nrules: []\n",
+    }
+    for relative_path, content in sources.items():
+        path = tmp_path / relative_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content)
+    _write_generated_outputs(tmp_path)
+    (tmp_path / "dist/shadowrocket/direct.list").write_bytes(b"\xff")
+
+    assert "cannot read generated file: dist/shadowrocket/direct.list" in validate_generated_files(tmp_path)
 
 
 def test_repository_validator_aggregates_findings_in_order(tmp_path: Path):

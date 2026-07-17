@@ -43,10 +43,10 @@ SOURCE_SETS = {
 }
 
 PRECEDENCE = (
-    "direct", "reject", "ai", "messaging", "media", "apple-microsoft", "cn-domain", "cn-ip",
+    "direct", "ai", "reject", "messaging", "media", "apple-microsoft", "cn-domain", "cn-ip",
 )
 
-_EXCLUDED_DIRECTORY_NAMES = {".git", "work", ".cache", ".pytest_cache"}
+_EXCLUDED_DIRECTORY_NAMES = {".git", ".superpowers", "work", ".cache", ".pytest_cache"}
 _PLACEHOLDER_URL = re.compile(
     r"https?://[^\s\"']*(?:\{(?:owner|repo|branch)\}|<(?:owner|repo|branch)>|"
     r"your_(?:username|repo|branch)|owner/repository)[^\s\"']*",
@@ -57,13 +57,13 @@ _UUID_FIELD = re.compile(
     re.IGNORECASE,
 )
 _PRIVATE_KEY = re.compile(
-    r"\b(?:private[-_ ]?key|reality[-_ ]?(?:private[-_ ]?)?key)\s*[:=]\s*[^\s#]{8,}",
+    r"\b(?:private[-_ ]?key|reality[-_ ]?(?:private[-_ ]?)?key)\s*[:=]\s*[^\s#]+",
     re.IGNORECASE,
 )
-_PASSWORD = re.compile(r"\b(?:password|passwd)\s*[:=]\s*[^\s#]{8,}", re.IGNORECASE)
+_PASSWORD = re.compile(r"\b(?:password|passwd)\s*[:=]\s*[^\s#]+", re.IGNORECASE)
 _SUBSCRIPTION_USERINFO = re.compile("subscription" + r"[_-]?" + r"userinfo\s*:", re.IGNORECASE)
 _SUBSCRIPTION_QUERY = re.compile(
-    r"[?&](?:token|key|uuid|password|secret|auth)=[^\s&#]{8,}",
+    r"[?&](?:token|key|uuid|password|secret|auth)=[^\s&#]+",
     re.IGNORECASE,
 )
 _PROXY_PREFIXES = tuple(scheme + ":" + r"//" for scheme in (
@@ -158,6 +158,17 @@ def _iter_scannable_files(root: Path) -> Iterator[Path]:
             yield current / filename
 
 
+def _is_binary(raw: bytes) -> bool:
+    """Return whether raw content is binary rather than repository text."""
+    if b"\0" in raw:
+        return True
+    try:
+        raw.decode("utf-8")
+    except UnicodeDecodeError:
+        return True
+    return any((byte < 32 and byte not in {9, 10, 13}) or byte == 127 for byte in raw)
+
+
 def _secret_kinds(text: str) -> list[str]:
     findings: list[str] = []
     if any(prefix in text.lower() for prefix in _PROXY_PREFIXES):
@@ -185,12 +196,9 @@ def scan_secrets(root: Path) -> list[str]:
         except OSError as error:
             errors.append(f"cannot scan {path.relative_to(root).as_posix()}: {error}")
             continue
-        if b"\0" in raw:
+        if _is_binary(raw):
             continue
-        try:
-            text = raw.decode("utf-8")
-        except UnicodeDecodeError:
-            continue
+        text = raw.decode("utf-8")
         relative_path = path.relative_to(root).as_posix()
         errors.extend(f"{relative_path}: {kind}" for kind in _secret_kinds(text))
     return sorted(errors)
@@ -271,8 +279,14 @@ def validate_generated_files(root: Path) -> list[str]:
             errors.append(f"empty required output: {relative_path}")
         if not path.exists():
             errors.append(f"missing generated file: {relative_path}")
-        elif path.read_text(encoding="utf-8") != content:
-            errors.append(f"stale generated file: {relative_path}")
+        else:
+            try:
+                actual_content = path.read_text(encoding="utf-8")
+            except (OSError, UnicodeDecodeError):
+                errors.append(f"cannot read generated file: {relative_path}")
+            else:
+                if actual_content != content:
+                    errors.append(f"stale generated file: {relative_path}")
     for path in sorted(actual - set(expected)):
         errors.append(f"stale generated file: {path.relative_to(root).as_posix()}")
     return sorted(errors)
@@ -285,12 +299,9 @@ def _validate_repository_urls(root: Path) -> list[str]:
             raw = path.read_bytes()
         except OSError:
             continue
-        if b"\0" in raw:
+        if _is_binary(raw):
             continue
-        try:
-            text = raw.decode("utf-8")
-        except UnicodeDecodeError:
-            continue
+        text = raw.decode("utf-8")
         if _PLACEHOLDER_URL.search(text):
             errors.append(f"unresolved repository URL placeholder: {path.relative_to(root).as_posix()}")
     return sorted(errors)
