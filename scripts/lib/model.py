@@ -45,11 +45,16 @@ class Rule:
     note: str | None = None
 
 
-def _normalize(rule_type: str, value: object) -> str:
+def normalize_rule_value(rule_type: str, value: object) -> str:
+    """Normalize a canonical rule value and reject output-injection syntax."""
     if not isinstance(value, str) or not value.strip():
         raise RuleError("rule value must be a non-empty string")
     if rule_type in {"domain", "domain-suffix"}:
         return normalize_domain(value)
+    if rule_type == "domain-keyword":
+        if "," in value or any(ord(character) < 32 or ord(character) == 127 for character in value):
+            raise RuleError(f"invalid domain-keyword: {value!r}")
+        return value.strip()
     value = value.strip()
     if rule_type == "ip-cidr":
         return str(ip_network(value, strict=False))
@@ -83,7 +88,7 @@ def load_rule_file(path: Path) -> list[Rule]:
             raise RuleError(f"{path}:{index}: unsupported targets: {sorted(targets - SUPPORTED_TARGETS)}")
         if rule_type == "process-name" and targets != frozenset({"mihomo"}):
             raise RuleError("process-name requires targets: [mihomo]")
-        result.append(Rule(rule_type, _normalize(rule_type, item.get("value")), targets, item.get("note")))
+        result.append(Rule(rule_type, normalize_rule_value(rule_type, item.get("value")), targets, item.get("note")))
     return result
 
 

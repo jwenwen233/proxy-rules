@@ -240,6 +240,18 @@ def test_repository_validator_aggregates_findings_in_order(tmp_path: Path):
     assert findings == sorted(findings)
 
 
+def test_repository_validator_rejects_safe_noted_unapproved_domain_keyword(tmp_path: Path) -> None:
+    rule_path = tmp_path / "source/personal/proxy.yaml"
+    rule_path.parent.mkdir(parents=True)
+    rule_path.write_text(
+        "version: 1\nrules:\n  - type: domain-keyword\n    value: anthropic\n    note: scoped test\n",
+        encoding="utf-8",
+    )
+
+    with pytest.raises(ValidationError, match="domain-keyword is not explicitly approved"):
+        validate_repository(tmp_path)
+
+
 def test_readme_has_operating_sections():
     repo_root = Path(__file__).parents[1]
     text = (repo_root / "README.md").read_text(encoding="utf-8")
@@ -265,8 +277,10 @@ def test_readme_documents_exact_upstream_provenance():
         "source/upstream.lock.json",
         "https://help.openai.com/en/articles/9247338-network-recommendations-for-chatgpt-errors-on-web-and-apps",
         "https://openai.com/chatgpt-voice.json",
+        "https://code.claude.com/docs/en/corporate-proxy",
         "https://ip.net.coffee/claude/site.html",
-        "community/manual reference",
+        "authoritative for the core Claude Code network families used by the canonical list",
+        "supplemental community/manual reference, not an official Anthropic policy",
         "https://www.anthropic.com/",
         "https://github.com/MetaCubeX/mihomo",
         "https://github.com/clash-verge-rev/clash-verge-rev",

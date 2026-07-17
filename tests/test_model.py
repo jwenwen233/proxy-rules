@@ -1,3 +1,4 @@
+import json
 from pathlib import Path
 
 import pytest
@@ -54,17 +55,25 @@ def test_curated_loader_rejects_non_hostname_domain_syntax(tmp_path: Path, value
         load_rule_file(path)
 
 
-def test_domain_normalization_uses_idna_and_does_not_constrain_keywords(tmp_path: Path) -> None:
+def test_domain_normalization_uses_idna(tmp_path: Path) -> None:
     path = write_rules(tmp_path, """
 version: 1
 rules:
   - type: domain-suffix
     value: B\u00fccher.Example.
-  - type: domain-keyword
-    value: https://example.com,REJECT
 """)
     rules = load_rule_file(path)
     assert [(rule.type, rule.value) for rule in rules] == [
         ("domain-suffix", "xn--bcher-kva.example"),
-        ("domain-keyword", "https://example.com,REJECT"),
     ]
+
+
+@pytest.mark.parametrize("value", ["keyword,REJECT", "keyword\nREJECT", "keyword\x01REJECT"])
+def test_loader_rejects_domain_keyword_injection_characters(tmp_path: Path, value: str) -> None:
+    path = write_rules(
+        tmp_path,
+        "version: 1\nrules:\n  - type: domain-keyword\n    value: " + json.dumps(value) + "\n",
+    )
+
+    with pytest.raises(RuleError, match="invalid domain-keyword"):
+        load_rule_file(path)

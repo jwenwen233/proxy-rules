@@ -5,7 +5,7 @@ from pathlib import Path
 
 import yaml
 
-from scripts.lib.model import Rule, load_rule_file, rules_for_target
+from scripts.lib.model import Rule, load_rule_file, normalize_rule_value, rules_for_target
 
 SHADOWROCKET_TYPES = {
     "domain": "DOMAIN",
@@ -24,8 +24,9 @@ def _sorted_rules(rules: Iterable[Rule], target: str) -> list[Rule]:
 def render_shadowrocket(rules: Iterable[Rule]) -> str:
     lines = []
     for rule in _sorted_rules(rules, "shadowrocket"):
+        value = normalize_rule_value(rule.type, rule.value)
         suffix = ",no-resolve" if rule.type in {"ip-cidr", "ip-asn"} else ""
-        lines.append(f"{SHADOWROCKET_TYPES[rule.type]},{rule.value}{suffix}")
+        lines.append(f"{SHADOWROCKET_TYPES[rule.type]},{value}{suffix}")
     return "\n".join(lines) + ("\n" if lines else "")
 
 
@@ -39,16 +40,19 @@ def choose_mihomo_behavior(rules: Sequence[Rule]) -> str:
 
 
 def render_mihomo(rules: Sequence[Rule], behavior: str) -> str:
-    selected = _sorted_rules(rules, "mihomo")
+    selected = [
+        (rule, normalize_rule_value(rule.type, rule.value))
+        for rule in _sorted_rules(rules, "mihomo")
+    ]
     if behavior == "domain":
-        payload = [rule.value if rule.type == "domain" else f"+.{rule.value}" for rule in selected]
+        payload = [value if rule.type == "domain" else f"+.{value}" for rule, value in selected]
     elif behavior == "ipcidr":
-        payload = [rule.value for rule in selected]
+        payload = [value for _, value in selected]
     elif behavior == "classical":
         payload = [
-            f"{MIHOMO_CLASSICAL_TYPES[rule.type]},{rule.value}"
+            f"{MIHOMO_CLASSICAL_TYPES[rule.type]},{value}"
             + (",no-resolve" if rule.type in {"ip-cidr", "ip-asn"} else "")
-            for rule in selected
+            for rule, value in selected
         ]
     else:
         raise ValueError(f"unsupported Mihomo behavior: {behavior}")

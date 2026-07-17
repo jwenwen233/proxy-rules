@@ -13,7 +13,7 @@ import yaml
 
 from scripts.build_rules import generated_files
 from scripts.lib.generate import build_all
-from scripts.lib.model import Rule, RuleError, load_rule_file
+from scripts.lib.model import Rule, RuleError, load_rule_file, normalize_rule_value
 
 
 POLICIES = {
@@ -73,6 +73,9 @@ _PROXY_PREFIXES = tuple(scheme + ":" + r"//" for scheme in (
     "vless", "vmess", "trojan", "ss", "ssr", "hysteria", "hysteria2", "tuic", "shadowsocks",
 ))
 _SHA256 = re.compile(r"[0-9a-f]{64}")
+
+# Broad substring matching is opt-in: each approved keyword needs a safety rationale in source.
+APPROVED_DOMAIN_KEYWORDS: frozenset[str] = frozenset()
 
 
 class ValidationError(ValueError):
@@ -242,8 +245,17 @@ def _validate_raw_rule_files(root: Path) -> list[str]:
                 continue
             rule_type = item.get("type")
             value = item.get("value")
-            if rule_type == "domain-keyword" and not str(item.get("note") or "").strip():
-                errors.append(f"{relative_path}:{index}: domain-keyword requires a non-empty note")
+            if rule_type == "domain-keyword":
+                if not str(item.get("note") or "").strip():
+                    errors.append(f"{relative_path}:{index}: domain-keyword requires a non-empty note")
+                try:
+                    keyword = normalize_rule_value(rule_type, value)
+                except RuleError:
+                    continue
+                if keyword not in APPROVED_DOMAIN_KEYWORDS:
+                    errors.append(
+                        f"{relative_path}:{index}: domain-keyword is not explicitly approved: {keyword}"
+                    )
             if rule_type == "ip-cidr" and isinstance(value, str):
                 try:
                     normalized = str(ip_network(value, strict=False))
