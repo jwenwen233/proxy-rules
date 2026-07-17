@@ -10,6 +10,14 @@ function airport() {
   return structuredClone(fixture);
 }
 
+function providerDomains(name) {
+  return fs.readFileSync(path.join(__dirname, '..', 'dist', 'mihomo', name), 'utf8')
+    .split(/\r?\n/)
+    .map(line => line.match(/^\s*-\s+(?:DOMAIN|DOMAIN-SUFFIX),([^,\s]+)\s*$/)?.[1]
+      ?? line.match(/^\s*-\s+([^,\s]+)\s*$/)?.[1])
+    .filter(Boolean);
+}
+
 test('enhances an airport profile while preserving non-reserved state', () => {
   const config = airport();
   config['socks-port'] = 7891;
@@ -52,13 +60,14 @@ test('uses one proxied resolver path and a direct encrypted bootstrap path', () 
   }
 });
 
-test('creates complete dynamic groups without silently direct-routing AI or UDP', () => {
+test('creates complete dynamic groups without admitting direct-style outbound proxies', () => {
   const groups = makeGroups();
   const byName = Object.fromEntries(groups.map(group => [group.name, group]));
 
   for (const name of ['PRX-Manual', 'PRX-Auto']) {
     assert.equal(byName[name]['include-all'], true);
     assert.equal(byName[name]['exclude-filter'], '(?i)剩余|流量|套餐|到期|官网|更新|订阅|客服|expire|traffic|website');
+    assert.equal(byName[name]['exclude-type'], 'Direct|Reject|Pass|Compatible');
   }
   assert.deepEqual(byName['PRX-AI'].proxies, ['PRX-Manual', 'PRX-Auto']);
   assert.equal('disable-udp' in byName['PRX-Proxy'], false);
@@ -85,14 +94,21 @@ test('uses public, unique, tracked rule-provider assets through PRX-Proxy', () =
   }
 });
 
-test('puts embedded AI handling before provider and reject rules before the final proxy match', () => {
+test('routes colliding AI provider domains before reject domains without weakening embedded AI rules', () => {
   const rules = makeRules();
+  const aiDomains = providerDomains('ai.yaml');
+  const rejectDomains = new Set(providerDomains('reject-domain.yaml'));
+  const overlaps = aiDomains.filter(domain => rejectDomains.has(domain));
+  const aiProvider = 'RULE-SET,PRX-RULE-ai,PRX-AI';
+  const rejectProvider = 'RULE-SET,PRX-RULE-reject-domain,REJECT';
   const firstProvider = rules.findIndex(rule => rule.startsWith('RULE-SET,'));
-  const aiRule = 'DOMAIN-SUFFIX,openai.com,PRX-AI';
 
-  assert.ok(rules.indexOf(aiRule) >= 0);
-  assert.ok(rules.indexOf(aiRule) < firstProvider);
-  assert.ok(rules.indexOf('RULE-SET,PRX-RULE-reject-domain,REJECT') > rules.indexOf('RULE-SET,PRX-RULE-direct,DIRECT'));
+  assert.ok(overlaps.includes('o33249.ingest.sentry.io'), 'real provider payloads must prove an exact matching overlap');
+  for (const domain of ['anthropic.com', 'claude.ai', 'claude.com', 'openai.com', 'chatgpt.com', 'oaistatic.com', 'oaiusercontent.com']) {
+    assert.ok(rules.includes(`DOMAIN-SUFFIX,${domain},PRX-AI`));
+  }
+  assert.ok(rules.indexOf('DOMAIN-SUFFIX,openai.com,PRX-AI') < firstProvider);
+  assert.ok(rules.indexOf(aiProvider) < rules.indexOf(rejectProvider));
   assert.deepEqual(rules.slice(-2), ['GEOIP,CN,DIRECT,no-resolve', 'MATCH,PRX-Proxy']);
 });
 

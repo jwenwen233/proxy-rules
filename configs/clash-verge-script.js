@@ -37,11 +37,12 @@ function makeGroups() {
   return [
     {
       name: 'PRX-Manual', type: 'select', 'include-all': true,
-      'exclude-filter': INFO_FILTER,
+      'exclude-filter': INFO_FILTER, 'exclude-type': 'Direct|Reject|Pass|Compatible',
     },
     {
       name: 'PRX-Auto', type: 'url-test', 'include-all': true,
-      'exclude-filter': INFO_FILTER, url: 'https://www.gstatic.com/generate_204',
+      'exclude-filter': INFO_FILTER, 'exclude-type': 'Direct|Reject|Pass|Compatible',
+      url: 'https://www.gstatic.com/generate_204',
       interval: 600, timeout: 5000, tolerance: 100,
     },
     ...Object.entries(SELECT_GROUPS).map(([name, proxies]) => ({name, type: 'select', proxies})),
@@ -75,8 +76,8 @@ function makeRules() {
     'DOMAIN-SUFFIX,oaistatic.com,PRX-AI',
     'DOMAIN-SUFFIX,oaiusercontent.com,PRX-AI',
     'RULE-SET,PRX-RULE-direct,DIRECT',
-    'RULE-SET,PRX-RULE-reject-domain,REJECT',
     'RULE-SET,PRX-RULE-ai,PRX-AI',
+    'RULE-SET,PRX-RULE-reject-domain,REJECT',
     'RULE-SET,PRX-RULE-openai-voice-ip,PRX-AI,no-resolve',
     'RULE-SET,PRX-RULE-messaging,PRX-Messaging',
     'RULE-SET,PRX-RULE-media,PRX-Media',
