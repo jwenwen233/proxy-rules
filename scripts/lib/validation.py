@@ -49,7 +49,14 @@ PRECEDENCE = (
     "direct", "ai", "reject", "messaging", "media", "apple-microsoft", "cn-domain", "cn-ip",
 )
 
-_EXCLUDED_DIRECTORY_NAMES = {".git", ".superpowers", "work", ".cache", ".pytest_cache"}
+_EXCLUDED_DIRECTORY_NAMES = {
+    ".git",
+    ".superpowers",
+    ".worktrees",
+    "work",
+    ".cache",
+    ".pytest_cache",
+}
 _PLACEHOLDER_URL = re.compile(
     r"https?://[^\s\"']*(?:\{(?:owner|repo|branch)\}|<(?:owner|repo|branch)>|"
     r"your_(?:username|repo|branch)|owner/repository)[^\s\"']*",

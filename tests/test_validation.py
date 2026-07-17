@@ -144,7 +144,15 @@ def test_secret_scanner_skips_binary_files_with_secret_shaped_ascii(tmp_path: Pa
 
 
 def test_secret_scanner_skips_its_excluded_directories(tmp_path: Path):
-    for directory in (".git", ".superpowers", "work", ".cache", ".pytest_cache", "docs/superpowers"):
+    for directory in (
+        ".git",
+        ".superpowers",
+        ".worktrees",
+        "work",
+        ".cache",
+        ".pytest_cache",
+        "docs/superpowers",
+    ):
         path = tmp_path / directory / "credential.txt"
         path.parent.mkdir(parents=True, exist_ok=True)
         path.write_text("vless:" + "//00000000-0000-0000-0000-000000000000@example.com:443")
