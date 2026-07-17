@@ -40,16 +40,16 @@ def _index(rules: list[str], rule: str) -> int:
     return rules.index(rule)
 
 
-def test_general_uses_proxied_browsing_dns_and_reachable_node_bootstrap():
+def test_general_uses_split_dns_and_reachable_node_bootstrap():
     general = _general(_sections()["General"])
 
-    assert general["dns-server"] == "https://1.1.1.1/dns-query#proxy"
-    assert general["fallback-dns-server"] == "https://1.0.0.1/dns-query#proxy"
+    assert general["dns-server"] == "https://dns.alidns.com/dns-query"
+    assert general["fallback-dns-server"] == "https://doh.pub/dns-query"
     assert general["proxy-dns-server"] == "223.5.5.5"
     assert general["dns-direct-system"] == "false"
     assert general["ipv6"] == "false"
     assert general["prefer-ipv6"] == "false"
-    assert general["always-ip-address"] == "true"
+    assert "always-ip-address" not in general
     assert general["udp-policy-not-supported-behaviour"] == "REJECT"
     assert "system" not in general["dns-server"]
     assert "system" not in general["fallback-dns-server"]
