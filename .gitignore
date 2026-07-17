@@ -1,2 +1,10 @@
 .worktrees/
 .superpowers/sdd/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+.cache/
+coverage.xml
+.coverage
+client-exports/
