@@ -61,15 +61,21 @@ For the complete local gate, install the development dependencies, run `pytest -
 
 ## 上游与致谢
 
-Rules and configuration choices draw on the official services and projects below. Respect each
-upstream project's license and terms when using or redistributing derived material.
+Rules and configuration choices draw on the services and projects below. Exact synchronized
+upstream URLs and hashes are tracked in `source/upstreams.yaml` and `source/upstream.lock.json`.
 
-- [Anthropic](https://www.anthropic.com/)
-- [OpenAI](https://openai.com/)
-- [MetaCubeX](https://github.com/MetaCubeX)
-- [Mihomo](https://github.com/MetaCubeX/mihomo)
-- [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev)
-- [Shadowrocket community manual](https://github.com/h2y/Shadowrocket-ADBlock-Rules/wiki)
+- [MetaCubeX meta-rules-dat](https://github.com/MetaCubeX/meta-rules-dat) supplies normalized
+  domain and IP snapshots; that repository is GPL-3.0.
+- [OpenAI network recommendations](https://help.openai.com/en/articles/9247338-network-recommendations-for-chatgpt-errors-on-web-and-apps)
+  inform the canonical OpenAI domains, while the exact voice IP data is synchronized from
+  [OpenAI's voice JSON](https://openai.com/chatgpt-voice.json).
+- [Anthropic](https://www.anthropic.com/) is the direct service reference. The user-provided
+  [Claude site list](https://ip.net.coffee/claude/site.html) is a community/manual reference,
+  not an official Anthropic policy.
+- [Mihomo](https://github.com/MetaCubeX/mihomo) validates the generated proxy configuration;
+  [Clash Verge Rev](https://github.com/clash-verge-rev/clash-verge-rev) hosts the Global Script;
+  and the [Shadowrocket community manual](https://github.com/h2y/Shadowrocket-ADBlock-Rules/wiki)
+  explains client configuration. Their licenses are not asserted here.
 
 Repository-authored content and GPL-compatible incorporated outputs are licensed under
 [GPL-3.0](LICENSE).

@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 from collections.abc import Iterable, Iterator
+from datetime import datetime
+import hashlib
 from ipaddress import ip_address, ip_network
+import json
 import os
 from pathlib import Path
 import re
@@ -69,6 +72,7 @@ _SUBSCRIPTION_QUERY = re.compile(
 _PROXY_PREFIXES = tuple(scheme + ":" + r"//" for scheme in (
     "vless", "vmess", "trojan", "ss", "ssr", "hysteria", "hysteria2", "tuic", "shadowsocks",
 ))
+_SHA256 = re.compile(r"[0-9a-f]{64}")
 
 
 class ValidationError(ValueError):
@@ -292,6 +296,101 @@ def validate_generated_files(root: Path) -> list[str]:
     return sorted(errors)
 
 
+def _valid_sha256(value: object) -> bool:
+    return isinstance(value, str) and bool(_SHA256.fullmatch(value))
+
+
+def _valid_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return True
+
+
+def validate_upstream_lock(root: Path) -> list[str]:
+    """Validate tracked upstream provenance without contacting the network."""
+    root = root.resolve()
+    errors: list[str] = []
+    manifest_path = root / "source/upstreams.yaml"
+    lock_path = root / "source/upstream.lock.json"
+    try:
+        manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, yaml.YAMLError) as error:
+        return [f"cannot read upstream manifest: {error}"]
+    try:
+        lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as error:
+        return [f"cannot read upstream lock: {error}"]
+    if not isinstance(manifest, dict) or set(manifest) != {"version", "sets"}:
+        errors.append("malformed upstream manifest")
+    if not isinstance(lock, dict) or set(lock) != {"version", "sets"}:
+        errors.append("malformed upstream lock")
+    manifest_sets = manifest.get("sets") if isinstance(manifest, dict) and manifest.get("version") == 1 else None
+    lock_sets = lock.get("sets") if isinstance(lock, dict) and lock.get("version") == 1 else None
+    if not isinstance(manifest_sets, dict) or not manifest_sets:
+        errors.append("upstream manifest must contain version 1 and a non-empty sets mapping")
+        manifest_sets = {}
+    if not isinstance(lock_sets, dict):
+        errors.append("upstream lock must contain version 1 and a sets mapping")
+        lock_sets = {}
+    if set(manifest_sets) != set(lock_sets):
+        errors.append("upstream manifest and lock set names differ")
+
+    for name in sorted(set(manifest_sets) & set(lock_sets)):
+        config = manifest_sets[name]
+        entry = lock_sets[name]
+        if not isinstance(config, dict):
+            errors.append(f"{name}: invalid upstream manifest entry")
+            continue
+        if set(config) != {"parser", "output", "urls"}:
+            errors.append(f"{name}: malformed upstream manifest entry")
+        if config.get("parser") not in {"domain-yaml", "ip-yaml", "openai-voice-json"}:
+            errors.append(f"{name}: unsupported upstream parser")
+        output, urls = config.get("output"), config.get("urls")
+        if not isinstance(output, str) or not isinstance(urls, list) or not urls or not all(isinstance(url, str) and url for url in urls):
+            errors.append(f"{name}: invalid upstream manifest output or urls")
+            continue
+        snapshot = (root / output).resolve()
+        if root not in snapshot.parents:
+            errors.append(f"{name}: output escapes repository root")
+            continue
+        if not snapshot.is_file():
+            errors.append(f"{name}: tracked snapshot is missing: {output}")
+        if not isinstance(entry, dict):
+            errors.append(f"{name}: invalid upstream lock entry")
+            continue
+        if not _valid_timestamp(entry.get("retrieved_at")):
+            errors.append(f"{name}: invalid retrieved_at")
+        normalized_hash = entry.get("normalized_sha256")
+        if not _valid_sha256(normalized_hash):
+            errors.append(f"{name}: invalid normalized_sha256")
+        elif snapshot.is_file() and hashlib.sha256(snapshot.read_bytes()).hexdigest() != normalized_hash:
+            errors.append(f"{name}: normalized snapshot hash mismatch")
+        if len(urls) == 1:
+            if set(entry) != {"url", "retrieved_at", "raw_sha256", "normalized_sha256"}:
+                errors.append(f"{name}: malformed single-source lock entry")
+            if entry.get("url") != urls[0]:
+                errors.append(f"{name}: upstream URL differs from manifest")
+            if not _valid_sha256(entry.get("raw_sha256")):
+                errors.append(f"{name}: invalid raw_sha256")
+        else:
+            sources = entry.get("sources")
+            if set(entry) != {"sources", "retrieved_at", "normalized_sha256"} or not isinstance(sources, list):
+                errors.append(f"{name}: malformed multi-source lock entry")
+                continue
+            expected_sources = [{"url": url} for url in urls]
+            actual_sources = [{"url": source.get("url")} if isinstance(source, dict) else {} for source in sources]
+            if actual_sources != expected_sources:
+                errors.append(f"{name}: upstream URL order differs from manifest")
+            for index, source in enumerate(sources):
+                if not isinstance(source, dict) or set(source) != {"url", "raw_sha256"} or not _valid_sha256(source.get("raw_sha256") if isinstance(source, dict) else None):
+                    errors.append(f"{name}: invalid raw_sha256 for source {index}")
+    return sorted(errors)
+
+
 def _validate_repository_urls(root: Path) -> list[str]:
     errors: list[str] = []
     for path in _iter_scannable_files(root):
@@ -317,6 +416,7 @@ def validate_repository(root: Path) -> None:
         *validate_policy_references(SET_POLICIES.values()),
         *_validate_raw_rule_files(root),
         *validate_generated_files(root),
+        *validate_upstream_lock(root),
         *_validate_repository_urls(root),
         *scan_secrets(root),
     ]

@@ -12,6 +12,7 @@
           "raw_sha256": "6edab7c1c1956a0abcf31cf6c5a33765522fe28a6a97b488133d7ac8e1db7584"
         }
       ],
+      "retrieved_at": "2026-07-17T14:31:30Z",
       "normalized_sha256": "e2e55134c3b0204d21e64146cc79ffb2774409a00a110b4384a3372452443fb5"
     },
     "cn-domain": {
@@ -53,6 +54,7 @@
           "raw_sha256": "f6280f9328763140c88267d43f24304e6dc6afdbb2a3d5f36f0e4db3d704cd64"
         }
       ],
+      "retrieved_at": "2026-07-17T14:31:47Z",
       "normalized_sha256": "e153d5de86d80d89b2fee5ab672b90d965cc2d2b312421b4b5e3b181d40ee8bb"
     },
     "messaging-domain": {
@@ -66,6 +68,7 @@
           "raw_sha256": "b066c5e8bcf3f5ceb00eac510414cbd3b61b36485f2aed0a672e07f6a50a6f17"
         }
       ],
+      "retrieved_at": "2026-07-17T14:31:50Z",
       "normalized_sha256": "1d772e6893ede0c2043b072cfbbd5b7874637a6b3ea6aca13489b6220bf7fe63"
     },
     "openai-voice": {

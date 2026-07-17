@@ -55,6 +55,12 @@ def test_domain_payload_normalizes_exact_and_suffix() -> None:
     ]
 
 
+@pytest.mark.parametrize("value", ["https://example.com", "bad domain", "example.com,REJECT"])
+def test_domain_payload_rejects_non_hostname_syntax(value: str) -> None:
+    with pytest.raises(UpstreamError, match="invalid domain"):
+        normalize_domain_payload([value])
+
+
 def test_openai_voice_rejects_empty_prefixes() -> None:
     with pytest.raises(UpstreamError, match="prefixes is empty"):
         parse_openai_voice(b'{"prefixes": []}')
@@ -131,11 +137,56 @@ def test_multi_url_set_records_each_source_hash(tmp_path: Path) -> None:
         "https://example.test/b.yaml": b"payload: [two.example]\n",
     }))
     entry = json.loads((tmp_path / "source/upstream.lock.json").read_text(encoding="utf-8"))["sets"]["domains"]
-    assert set(entry) == {"sources", "normalized_sha256"}
+    assert set(entry) == {"sources", "retrieved_at", "normalized_sha256"}
     assert entry["sources"] == [
         {"url": "https://example.test/a.yaml", "raw_sha256": entry["sources"][0]["raw_sha256"]},
         {"url": "https://example.test/b.yaml", "raw_sha256": entry["sources"][1]["raw_sha256"]},
     ]
+
+
+def test_unchanged_multi_url_update_preserves_set_timestamp(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    manifest = write_manifest(tmp_path, {
+        "domains": {
+            "parser": "domain-yaml",
+            "output": "source/upstream/domains.yaml",
+            "urls": ["https://example.test/a.yaml", "https://example.test/b.yaml"],
+        },
+    })
+    responses = {
+        "https://example.test/a.yaml": b"payload: [one.example]\n",
+        "https://example.test/b.yaml": b"payload: [two.example]\n",
+    }
+    monkeypatch.setattr("scripts.lib.upstream.now_utc", lambda: "2020-01-01T00:00:00Z")
+    sync_manifest(manifest, tmp_path, True, opener_for(responses))
+    first_lock = (tmp_path / "source/upstream.lock.json").read_bytes()
+    monkeypatch.setattr("scripts.lib.upstream.now_utc", lambda: "2030-01-01T00:00:00Z")
+    result = sync_manifest(manifest, tmp_path, True, opener_for(responses))
+    assert result["changed"] is False
+    assert (tmp_path / "source/upstream.lock.json").read_bytes() == first_lock
+
+
+def test_update_migrates_legacy_multi_url_lock_without_timestamp(tmp_path: Path) -> None:
+    manifest = write_manifest(tmp_path, {
+        "domains": {
+            "parser": "domain-yaml",
+            "output": "source/upstream/domains.yaml",
+            "urls": ["https://example.test/a.yaml", "https://example.test/b.yaml"],
+        },
+    })
+    responses = {
+        "https://example.test/a.yaml": b"payload: [one.example]\n",
+        "https://example.test/b.yaml": b"payload: [two.example]\n",
+    }
+    sync_manifest(manifest, tmp_path, True, opener_for(responses))
+    lock_path = tmp_path / "source/upstream.lock.json"
+    legacy_lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    legacy_lock["sets"]["domains"].pop("retrieved_at")
+    lock_path.write_text(json.dumps(legacy_lock), encoding="utf-8")
+
+    result = sync_manifest(manifest, tmp_path, True, opener_for(responses))
+
+    assert result["changed"] is True
+    assert json.loads(lock_path.read_text(encoding="utf-8"))["sets"]["domains"]["retrieved_at"]
 
 
 def test_check_mode_reports_changes_without_writing(tmp_path: Path) -> None:

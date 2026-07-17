@@ -1,5 +1,7 @@
 from pathlib import Path
 import re
+import hashlib
+import json
 
 import pytest
 import yaml
@@ -10,10 +12,86 @@ from scripts.lib.validation import (
     ValidationError,
     resolve_policy,
     scan_secrets,
+    validate_upstream_lock,
     validate_generated_files,
     validate_repository,
     validate_rule_conflicts,
 )
+
+
+def _write_valid_upstream_lock(root: Path) -> tuple[Path, Path]:
+    snapshot = root / "source/upstream/domains.yaml"
+    snapshot.parent.mkdir(parents=True, exist_ok=True)
+    snapshot.write_text("version: 1\nrules:\n- type: domain\n  value: example.com\n", encoding="utf-8")
+    raw_hash = "a" * 64
+    normalized_hash = hashlib.sha256(snapshot.read_bytes()).hexdigest()
+    (root / "source/upstreams.yaml").write_text("""
+version: 1
+sets:
+  domains:
+    parser: domain-yaml
+    output: source/upstream/domains.yaml
+    urls: [https://example.test/domains.yaml]
+""", encoding="utf-8")
+    (root / "source/upstream.lock.json").write_text(json.dumps({"version": 1, "sets": {
+        "domains": {
+            "url": "https://example.test/domains.yaml",
+            "retrieved_at": "2026-07-17T12:54:37Z",
+            "raw_sha256": raw_hash,
+            "normalized_sha256": normalized_hash,
+        },
+    }}), encoding="utf-8")
+    return snapshot, root / "source/upstream.lock.json"
+
+
+def test_upstream_lock_validator_accepts_valid_offline_snapshot(tmp_path: Path) -> None:
+    _write_valid_upstream_lock(tmp_path)
+    assert validate_upstream_lock(tmp_path) == []
+
+
+@pytest.mark.parametrize("tamper", ["snapshot", "set", "url", "timestamp"])
+def test_upstream_lock_validator_rejects_tampering(tmp_path: Path, tamper: str) -> None:
+    snapshot, lock_path = _write_valid_upstream_lock(tmp_path)
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    if tamper == "snapshot":
+        snapshot.write_text("tampered\n", encoding="utf-8")
+    elif tamper == "set":
+        lock["sets"]["extra"] = lock["sets"]["domains"]
+    elif tamper == "url":
+        lock["sets"]["domains"]["url"] = "https://example.test/other.yaml"
+    else:
+        lock["sets"]["domains"].pop("retrieved_at")
+    lock_path.write_text(json.dumps(lock), encoding="utf-8")
+    assert validate_upstream_lock(tmp_path)
+
+
+def test_upstream_lock_validator_rejects_invalid_timestamp_and_hash(tmp_path: Path) -> None:
+    _, lock_path = _write_valid_upstream_lock(tmp_path)
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    lock["sets"]["domains"]["retrieved_at"] = "not-a-date"
+    lock["sets"]["domains"]["raw_sha256"] = "not-a-hash"
+    lock_path.write_text(json.dumps(lock), encoding="utf-8")
+    errors = validate_upstream_lock(tmp_path)
+    assert any("retrieved_at" in error for error in errors)
+    assert any("raw_sha256" in error for error in errors)
+
+
+def test_upstream_lock_validator_rejects_malformed_manifest_and_lock_metadata(tmp_path: Path) -> None:
+    _, lock_path = _write_valid_upstream_lock(tmp_path)
+    manifest_path = tmp_path / "source/upstreams.yaml"
+    manifest = yaml.safe_load(manifest_path.read_text(encoding="utf-8"))
+    lock = json.loads(lock_path.read_text(encoding="utf-8"))
+    manifest["sets"]["domains"]["parser"] = "unknown"
+    manifest["extra"] = True
+    lock["extra"] = True
+    manifest_path.write_text(yaml.safe_dump(manifest), encoding="utf-8")
+    lock_path.write_text(json.dumps(lock), encoding="utf-8")
+
+    errors = validate_upstream_lock(tmp_path)
+
+    assert any("malformed upstream manifest" in error for error in errors)
+    assert any("malformed upstream lock" in error for error in errors)
+    assert any("unsupported upstream parser" in error for error in errors)
 
 
 def test_detects_direct_reject_conflict():
@@ -178,6 +256,25 @@ def test_readme_has_operating_sections():
     assert all(item in text for item in required)
 
 
+def test_readme_documents_exact_upstream_provenance():
+    text = (Path(__file__).parents[1] / "README.md").read_text(encoding="utf-8")
+    required = [
+        "https://github.com/MetaCubeX/meta-rules-dat",
+        "GPL-3.0",
+        "source/upstreams.yaml",
+        "source/upstream.lock.json",
+        "https://help.openai.com/en/articles/9247338-network-recommendations-for-chatgpt-errors-on-web-and-apps",
+        "https://openai.com/chatgpt-voice.json",
+        "https://ip.net.coffee/claude/site.html",
+        "community/manual reference",
+        "https://www.anthropic.com/",
+        "https://github.com/MetaCubeX/mihomo",
+        "https://github.com/clash-verge-rev/clash-verge-rev",
+        "https://github.com/h2y/Shadowrocket-ADBlock-Rules/wiki",
+    ]
+    assert all(item in text for item in required)
+
+
 def test_license_is_unmodified_gpl_v3_text():
     text = (Path(__file__).parents[1] / "LICENSE").read_text(encoding="utf-8")
     assert text.startswith("                    GNU GENERAL PUBLIC LICENSE\n")
@@ -203,6 +300,9 @@ def test_validation_workflow_is_pinned_least_privilege_and_reproducible():
         "pull-requests": "write",
     }
     assert all("permissions" not in job for name, job in jobs.items() if name != "scheduled-update")
+    for job in jobs.values():
+        checkout = next(step for step in job["steps"] if step.get("uses", "").startswith("actions/checkout@"))
+        assert checkout["with"] == {"persist-credentials": False}
 
     expected_actions = {
         "actions/checkout": "34e114876b0b11c390a56381ad16ebd13914f8d5",

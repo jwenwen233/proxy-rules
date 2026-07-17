@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from ipaddress import ip_network
 from pathlib import Path
+import re
 from typing import Iterable
 
 import yaml
@@ -13,6 +14,27 @@ SUPPORTED_TARGETS = frozenset({"shadowrocket", "mihomo"})
 
 class RuleError(ValueError):
     pass
+
+
+_HOSTNAME_LABEL = re.compile(r"[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?")
+
+
+def normalize_domain(value: object) -> str:
+    """Normalize an IDNA hostname and reject rule or URL syntax."""
+    if not isinstance(value, str) or not value:
+        raise RuleError("invalid domain: value must be a non-empty string")
+    if any(character.isspace() or ord(character) < 32 or ord(character) == 127 for character in value):
+        raise RuleError(f"invalid domain: {value}")
+    try:
+        normalized = value.encode("idna").decode("ascii").lower().rstrip(".")
+    except UnicodeError as error:
+        raise RuleError(f"invalid domain: {value}") from error
+    if not normalized or len(normalized.encode("ascii")) > 253:
+        raise RuleError(f"invalid domain: {value}")
+    labels = normalized.split(".")
+    if any(len(label.encode("ascii")) > 63 or not _HOSTNAME_LABEL.fullmatch(label) for label in labels):
+        raise RuleError(f"invalid domain: {value}")
+    return normalized
 
 
 @dataclass(frozen=True, slots=True)
@@ -26,9 +48,9 @@ class Rule:
 def _normalize(rule_type: str, value: object) -> str:
     if not isinstance(value, str) or not value.strip():
         raise RuleError("rule value must be a non-empty string")
-    value = value.strip()
     if rule_type in {"domain", "domain-suffix"}:
-        return value.rstrip(".").lower()
+        return normalize_domain(value)
+    value = value.strip()
     if rule_type == "ip-cidr":
         return str(ip_network(value, strict=False))
     if rule_type == "ip-asn":

@@ -12,7 +12,7 @@ from urllib.request import Request, urlopen
 
 import yaml
 
-from scripts.lib.model import Rule
+from scripts.lib.model import Rule, RuleError, normalize_domain
 
 
 class UpstreamError(RuntimeError):
@@ -24,13 +24,16 @@ def normalize_domain_payload(payload: list[str]) -> list[Rule]:
     for raw in payload:
         if not isinstance(raw, str) or not raw.strip():
             raise UpstreamError("domain payload contains a non-string or empty entry")
-        value = raw.strip().lower().rstrip(".")
-        if value.startswith(("+.", "*.")):
-            result.add(Rule("domain-suffix", value[2:]))
-        elif any(token in value for token in ("*", "?", "regexp:")):
+        if raw.startswith(("+.", "*.")):
+            rule_type, value = "domain-suffix", raw[2:]
+        elif any(token in raw.lower() for token in ("*", "?", "regexp:")):
             raise UpstreamError(f"unsupported upstream domain expression: {raw}")
         else:
-            result.add(Rule("domain", value))
+            rule_type, value = "domain", raw
+        try:
+            result.add(Rule(rule_type, normalize_domain(value)))
+        except RuleError as error:
+            raise UpstreamError(str(error)) from error
     return sorted(result, key=lambda rule: (rule.type, rule.value))
 
 
@@ -149,7 +152,11 @@ def _new_lock_entry(source_hashes: list[dict[str, str]], normalized_sha256: str)
             "raw_sha256": source_hashes[0]["raw_sha256"],
             "normalized_sha256": normalized_sha256,
         }
-    return {"sources": source_hashes, "normalized_sha256": normalized_sha256}
+    return {
+        "sources": source_hashes,
+        "retrieved_at": now_utc(),
+        "normalized_sha256": normalized_sha256,
+    }
 
 
 def _write_atomically(files: dict[Path, bytes]) -> None:
@@ -227,6 +234,8 @@ def sync_manifest(manifest: Path, repo_root: Path, update: bool, opener: Callabl
         unchanged = (
             _same_sources(existing_entry, source_hashes)
             and isinstance(existing_entry, dict)
+            and isinstance(existing_entry.get("retrieved_at"), str)
+            and bool(existing_entry["retrieved_at"])
             and existing_entry.get("normalized_sha256") == normalized_sha256
             and destination.exists()
             and destination.read_bytes() == snapshot
