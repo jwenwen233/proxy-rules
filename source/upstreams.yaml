@@ -1,0 +1,40 @@
+version: 1
+sets:
+  reject-domain:
+    parser: domain-yaml
+    output: source/upstream/reject-domain.yaml
+    urls: [https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-ads-all.yaml]
+  cn-domain:
+    parser: domain-yaml
+    output: source/upstream/cn-domain.yaml
+    urls: [https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.yaml]
+  cn-ip:
+    parser: ip-yaml
+    output: source/upstream/cn-ip.yaml
+    urls: [https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.yaml]
+  media-domain:
+    parser: domain-yaml
+    output: source/upstream/media-domain.yaml
+    urls:
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/disney.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/hbo.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/spotify.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/tiktok.yaml
+  messaging-domain:
+    parser: domain-yaml
+    output: source/upstream/messaging-domain.yaml
+    urls:
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/discord.yaml
+  apple-microsoft-domain:
+    parser: domain-yaml
+    output: source/upstream/apple-microsoft-domain.yaml
+    urls:
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple.yaml
+      - https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/microsoft.yaml
+  openai-voice:
+    parser: openai-voice-json
+    output: source/ai/openai-voice.yaml
+    urls: [https://openai.com/chatgpt-voice.json]

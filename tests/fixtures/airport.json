@@ -1,0 +1,13 @@
+{
+  "mixed-port": 7890,
+  "proxies": [
+    {"name": "US-01", "type": "socks5", "server": "127.0.0.1", "port": 1080},
+    {"name": "Local-Direct", "type": "direct"}
+  ],
+  "proxy-providers": {"Airport": {"type": "file", "path": "./provider.yaml"}},
+  "proxy-groups": [{"name": "Airport-Chain", "type": "select", "proxies": ["US-01"]}],
+  "rule-providers": {"Airport-Rules": {"type": "file", "behavior": "classical", "path": "./airport-rules.yaml"}},
+  "rules": ["MATCH,DIRECT"],
+  "dns": {"enable": true, "nameserver": ["system"], "fallback": ["8.8.8.8"]},
+  "tun": {"enable": false, "stack": "gvisor"}
+}

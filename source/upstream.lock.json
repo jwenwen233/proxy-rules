@@ -1,0 +1,87 @@
+{
+  "version": 1,
+  "sets": {
+    "apple-microsoft-domain": {
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/apple.yaml",
+          "raw_sha256": "304585dba7a172c8473a83d1804059649acdacbd7dc8888738beb0fe8d1f60e4"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/microsoft.yaml",
+          "raw_sha256": "6edab7c1c1956a0abcf31cf6c5a33765522fe28a6a97b488133d7ac8e1db7584"
+        }
+      ],
+      "retrieved_at": "2026-07-17T14:31:30Z",
+      "normalized_sha256": "e2e55134c3b0204d21e64146cc79ffb2774409a00a110b4384a3372452443fb5"
+    },
+    "cn-domain": {
+      "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/cn.yaml",
+      "retrieved_at": "2026-07-17T12:54:37Z",
+      "raw_sha256": "0f12901b9bec6e1a48f9ed92b6b6fbc24d6d3d80365cfeb927a9b88264bc6794",
+      "normalized_sha256": "4fd7ae69f1a2aea82bfae0f9b043046907a0645ba6edd62d6993210ee3c1ec46"
+    },
+    "cn-ip": {
+      "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geoip/cn.yaml",
+      "retrieved_at": "2026-07-17T12:54:39Z",
+      "raw_sha256": "bcfb22d9693cab2631bd964862d35ed87d808f5ff772cce5e4c931231a8270b2",
+      "normalized_sha256": "a2f9930214ef6bfc9414dda676e56cbabac2b5ef1bd0a23648d985272cc1b40f"
+    },
+    "media-domain": {
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/youtube.yaml",
+          "raw_sha256": "ec32854438b8ad4e2f2f2ee0d578834c667f1d0cec4c82357e34629452d2fc5d"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/netflix.yaml",
+          "raw_sha256": "4cf3bf6f2b28d578894d767415bbca0cc8ff4bf326b1ad8fffd59dba41da016f"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/disney.yaml",
+          "raw_sha256": "9772c619590dc454251c4f1df016e5344f0fb8cd5c9f67e22959a963c1ab417b"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/hbo.yaml",
+          "raw_sha256": "b0864fdaa3ed8ea6583795feba5990e26cf46c15e58c6943980fa5ca274e84a6"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/spotify.yaml",
+          "raw_sha256": "f3e69f940cacfa667dfe14d656523d9eb84d358a64195cd0fdefa5d3b0a0ee26"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/tiktok.yaml",
+          "raw_sha256": "f6280f9328763140c88267d43f24304e6dc6afdbb2a3d5f36f0e4db3d704cd64"
+        }
+      ],
+      "retrieved_at": "2026-07-17T14:31:47Z",
+      "normalized_sha256": "e153d5de86d80d89b2fee5ab672b90d965cc2d2b312421b4b5e3b181d40ee8bb"
+    },
+    "messaging-domain": {
+      "sources": [
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/telegram.yaml",
+          "raw_sha256": "4712014d6fcb434daf8b03b4740e37445109b42bc0e824f6acbce733ef92abb0"
+        },
+        {
+          "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/discord.yaml",
+          "raw_sha256": "b066c5e8bcf3f5ceb00eac510414cbd3b61b36485f2aed0a672e07f6a50a6f17"
+        }
+      ],
+      "retrieved_at": "2026-07-17T14:31:50Z",
+      "normalized_sha256": "1d772e6893ede0c2043b072cfbbd5b7874637a6b3ea6aca13489b6220bf7fe63"
+    },
+    "openai-voice": {
+      "url": "https://openai.com/chatgpt-voice.json",
+      "retrieved_at": "2026-07-17T12:54:54Z",
+      "raw_sha256": "8f03f3c594165eeff009915c7e2beb4bdfb9d429fb1955c205e3b33ec781899a",
+      "normalized_sha256": "9cbbf4190f8a8bf26cf8bbf1ae77eadb3f01e5f7f50f3e149d4e7b065e742dc2"
+    },
+    "reject-domain": {
+      "url": "https://raw.githubusercontent.com/MetaCubeX/meta-rules-dat/meta/geo/geosite/category-ads-all.yaml",
+      "retrieved_at": "2026-07-17T12:54:55Z",
+      "raw_sha256": "738eb5cd6cf4d38727c6a86cb18aff38d4620f4c8d91e77e7a393cbd38a2a2ec",
+      "normalized_sha256": "16519ebecb53adc0864f8fe8c23840a741e1de46ff52981823a52ec9c813ac4c"
+    }
+  }
+}

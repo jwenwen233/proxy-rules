@@ -1,0 +1,10 @@
+version: 1
+rules:
+  - {type: domain-suffix, value: anthropic.com}
+  - {type: domain-suffix, value: claude.ai}
+  - {type: domain-suffix, value: claude.com}
+  - {type: domain-suffix, value: clau.de}
+  - {type: domain-suffix, value: claudemcpclient.com}
+  - {type: domain-suffix, value: claudemcpcontent.com}
+  - {type: domain-suffix, value: claudeusercontent.com}
+  - {type: ip-cidr, value: 160.79.104.0/21}
