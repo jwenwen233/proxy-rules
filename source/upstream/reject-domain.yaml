@@ -221,26 +221,6 @@ rules:
 - type: domain
   value: p9-ad-sign.byteimg.com
 - type: domain
-  value: pinggai0.caixin.com
-- type: domain
-  value: pinggai1.caixin.com
-- type: domain
-  value: pinggai2.caixin.com
-- type: domain
-  value: pinggai3.caixin.com
-- type: domain
-  value: pinggai4.caixin.com
-- type: domain
-  value: pinggai5.caixin.com
-- type: domain
-  value: pinggai6.caixin.com
-- type: domain
-  value: pinggai7.caixin.com
-- type: domain
-  value: pinggai8.caixin.com
-- type: domain
-  value: pinggai9.caixin.com
-- type: domain
   value: pixel.rustore.ru
 - type: domain
   value: pixel.yandex.com
@@ -413,8 +393,6 @@ rules:
 - type: domain-suffix
   value: ad.toutiao.com
 - type: domain-suffix
-  value: ad.unimhk.com
-- type: domain-suffix
   value: ad.us.sinaimg.cn
 - type: domain-suffix
   value: ad.wang502.com
@@ -465,6 +443,10 @@ rules:
 - type: domain-suffix
   value: adcolony.com
 - type: domain-suffix
+  value: addthis.com
+- type: domain-suffix
+  value: addthiscdn.com
+- type: domain-suffix
   value: addthisedge.com
 - type: domain-suffix
   value: adeng.hpplay.cn
@@ -514,8 +496,6 @@ rules:
   value: adping.qq.com
 - type: domain-suffix
   value: adpm.app.qq.com
-- type: domain-suffix
-  value: adq.chinaso.com
 - type: domain-suffix
   value: ads-api.duolingo.com
 - type: domain-suffix
@@ -717,6 +697,8 @@ rules:
 - type: domain-suffix
   value: api2.amplitude.com
 - type: domain-suffix
+  value: app-ads-services.com
+- type: domain-suffix
   value: app-analytics-services-att.com
 - type: domain-suffix
   value: app-analytics-services.com
@@ -819,11 +801,7 @@ rules:
 - type: domain-suffix
   value: ccs.umeng.com
 - type: domain-suffix
-  value: cdn.advertserve.com
-- type: domain-suffix
   value: cdn.banclip.com
-- type: domain-suffix
-  value: cdn.pocoiq.cn
 - type: domain-suffix
   value: cdp.cloud.unity3d.com
 - type: domain-suffix
@@ -895,6 +873,8 @@ rules:
 - type: domain-suffix
   value: cretgate.com
 - type: domain-suffix
+  value: csjplatform.com
+- type: domain-suffix
   value: cstm.baidu.com
 - type: domain-suffix
   value: ctobsnssdk.com
@@ -906,8 +886,6 @@ rules:
   value: da.hunantv.com
 - type: domain-suffix
   value: da.mgtv.com
-- type: domain-suffix
-  value: das-rpt-log.ucloud.cn
 - type: domain-suffix
   value: data.flurry.com
 - type: domain-suffix
@@ -928,8 +906,6 @@ rules:
   value: demdex.net
 - type: domain-suffix
   value: dig.bdurl.net
-- type: domain-suffix
-  value: dn-growing.qbox.me
 - type: domain-suffix
   value: doubleclick-cn.net
 - type: domain-suffix
@@ -1371,8 +1347,6 @@ rules:
 - type: domain-suffix
   value: oc.umeng.com
 - type: domain-suffix
-  value: oct.pocoiq.cn
-- type: domain-suffix
   value: ogury.co
 - type: domain-suffix
   value: ogury.com
@@ -1400,6 +1374,8 @@ rules:
   value: p4p.sina.com.cn
 - type: domain-suffix
   value: pagead.l.google.com
+- type: domain-suffix
+  value: pangle.cn
 - type: domain-suffix
   value: pangolin-dsp-toutiao-b.com
 - type: domain-suffix
@@ -1598,8 +1574,6 @@ rules:
   value: ssacdn.com
 - type: domain-suffix
   value: ssp.api.tappx.com
-- type: domain-suffix
-  value: stat.chinaso.com
 - type: domain-suffix
   value: stat.m.jd.com
 - type: domain-suffix

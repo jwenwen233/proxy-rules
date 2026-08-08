@@ -663,6 +663,10 @@ rules:
 - type: domain
   value: tj-pod1-smp-device.apple.com
 - type: domain
+  value: tj-pod2-smp-device.apple.com
+- type: domain
+  value: tj-pod3-smp-device.apple.com
+- type: domain
   value: tv.applemusic.com
 - type: domain
   value: universal-activity-service.itunes.apple.com
@@ -3068,6 +3072,8 @@ rules:
   value: githubpreview.dev
 - type: domain-suffix
   value: githubstatus.com
+- type: domain-suffix
+  value: githubsupport.com
 - type: domain-suffix
   value: githubuniverse.com
 - type: domain-suffix

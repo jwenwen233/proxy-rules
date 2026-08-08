@@ -15,6 +15,8 @@ rules:
 - type: domain
   value: disney.my.sentry.io
 - type: domain
+  value: disneyplus.com.ssl.sc.omtrdc.net
+- type: domain
   value: espn.api.edge.bamgrid.com
 - type: domain
   value: espn.hb.omtrdc.net
@@ -24,6 +26,8 @@ rules:
   value: heads-ak-spotify-com.akamaized.net
 - type: domain
   value: heads4-ak-spotify-com.akamaized.net
+- type: domain
+  value: hulu.playback.edge.bamgrid.com
 - type: domain
   value: netflix.com.edgesuite.net
 - type: domain
@@ -45,6 +49,10 @@ rules:
 - type: domain
   value: yt3.googleusercontent.com
 - type: domain-suffix
+  value: 112263.com
+- type: domain-suffix
+  value: 20thcenturystudios.com
+- type: domain-suffix
   value: 20thcenturystudios.com.au
 - type: domain-suffix
   value: 20thcenturystudios.com.br
@@ -54,6 +62,8 @@ rules:
   value: abc-studios.com
 - type: domain-suffix
   value: abc.com
+- type: domain-suffix
+  value: abcnews.com
 - type: domain-suffix
   value: ads.youtube.com
 - type: domain-suffix
@@ -67,6 +77,8 @@ rules:
 - type: domain-suffix
   value: bamgrid.com
 - type: domain-suffix
+  value: bamtech.net
+- type: domain-suffix
   value: beautyandthebeastmusical.co.uk
 - type: domain-suffix
   value: beforeigners.com
@@ -77,9 +89,11 @@ rules:
 - type: domain-suffix
   value: bytedapm.com
 - type: domain-suffix
-  value: byteoversea.com
+  value: callhulu.com
 - type: domain-suffix
   value: cinemax.com
+- type: domain-suffix
+  value: detpress.com
 - type: domain-suffix
   value: dilcdn.com
 - type: domain-suffix
@@ -173,7 +187,11 @@ rules:
 - type: domain-suffix
   value: disney.sg
 - type: domain-suffix
+  value: disneyaccount.com
+- type: domain-suffix
   value: disneyadsales.com
+- type: domain-suffix
+  value: disneyanimation.com
 - type: domain-suffix
   value: disneyarena.com
 - type: domain-suffix
@@ -202,6 +220,8 @@ rules:
   value: disneyjunior.com
 - type: domain-suffix
   value: disneyjuniortreataday.com
+- type: domain-suffix
+  value: disneylandparis.com
 - type: domain-suffix
   value: disneylatino.com
 - type: domain-suffix
@@ -245,7 +265,7 @@ rules:
 - type: domain-suffix
   value: disneyplus.com
 - type: domain-suffix
-  value: disneyplus.com.ssl.sc.omtrdc.net
+  value: disneyprivacycenter.com
 - type: domain-suffix
   value: disneyredirects.com
 - type: domain-suffix
@@ -256,6 +276,8 @@ rules:
   value: disneystreaming.com
 - type: domain-suffix
   value: disneysubscription.com
+- type: domain-suffix
+  value: disneytermsofuse.com
 - type: domain-suffix
   value: disneytickets.co.uk
 - type: domain-suffix
@@ -289,7 +311,17 @@ rules:
 - type: domain-suffix
   value: fast.com
 - type: domain-suffix
+  value: findyourlimits.com
+- type: domain-suffix
   value: forthethrone.com
+- type: domain-suffix
+  value: freeform.com
+- type: domain-suffix
+  value: freehulu.com
+- type: domain-suffix
+  value: fxnetwork.com
+- type: domain-suffix
+  value: fxnetworks.com
 - type: domain-suffix
   value: ggpht.cn
 - type: domain-suffix
@@ -411,6 +443,14 @@ rules:
 - type: domain-suffix
   value: homeboxoffice.com
 - type: domain-suffix
+  value: hongkongdisneyland.com
+- type: domain-suffix
+  value: hooloo.tv
+- type: domain-suffix
+  value: hoolu.com
+- type: domain-suffix
+  value: hoolu.tv
+- type: domain-suffix
   value: hotstar-cdn.net
 - type: domain-suffix
   value: hotstar-labs.com
@@ -421,7 +461,75 @@ rules:
 - type: domain-suffix
   value: hsprepack.akamaized.net
 - type: domain-suffix
+  value: hu1u.com
+- type: domain-suffix
+  value: huloo.cc
+- type: domain-suffix
+  value: huloo.tv
+- type: domain-suffix
+  value: hulu.com
+- type: domain-suffix
+  value: hulu.jp
+- type: domain-suffix
+  value: hulu.tv
+- type: domain-suffix
+  value: hulu.us
+- type: domain-suffix
+  value: huluaction.com
+- type: domain-suffix
+  value: huluad.com
+- type: domain-suffix
+  value: huluapp.com
+- type: domain-suffix
+  value: huluasks.com
+- type: domain-suffix
+  value: hulucall.com
+- type: domain-suffix
+  value: hulufree.com
+- type: domain-suffix
+  value: hulugans.com
+- type: domain-suffix
+  value: hulugermany.com
+- type: domain-suffix
+  value: hulugo.com
+- type: domain-suffix
+  value: huluim.com
+- type: domain-suffix
+  value: huluinstantmessenger.com
+- type: domain-suffix
+  value: huluitaly.com
+- type: domain-suffix
+  value: hulunet.com
+- type: domain-suffix
+  value: hulunetwork.com
+- type: domain-suffix
+  value: huluplus.com
+- type: domain-suffix
+  value: hulupremium.com
+- type: domain-suffix
+  value: hulupurchase.com
+- type: domain-suffix
+  value: huluqa.com
+- type: domain-suffix
+  value: hulurussia.com
+- type: domain-suffix
+  value: huluspain.com
+- type: domain-suffix
+  value: hulusports.com
+- type: domain-suffix
+  value: hulustream.com
+- type: domain-suffix
+  value: huluteam.com
+- type: domain-suffix
+  value: hulutv.com
+- type: domain-suffix
+  value: huluusa.com
+- type: domain-suffix
+  value: joinmaidez.com
+- type: domain-suffix
   value: lifeatspotify.com
+- type: domain-suffix
+  value: lucasfilm.com
 - type: domain-suffix
   value: marvel.com
 - type: domain-suffix
@@ -451,7 +559,11 @@ rules:
 - type: domain-suffix
   value: muscdn.com
 - type: domain-suffix
+  value: mushymush.tv
+- type: domain-suffix
   value: musical.ly
+- type: domain-suffix
+  value: myhulu.com
 - type: domain-suffix
   value: natgeomaps.com
 - type: domain-suffix
@@ -507,13 +619,25 @@ rules:
 - type: domain-suffix
   value: nomadlandmovie.ch
 - type: domain-suffix
+  value: originalhulu.com
+- type: domain-suffix
+  value: payhulu.com
+- type: domain-suffix
+  value: pixar.com
+- type: domain-suffix
   value: playmation.com
 - type: domain-suffix
   value: pscdn.co
 - type: domain-suffix
   value: redbyhbo.com
 - type: domain-suffix
+  value: registerhulu.com
+- type: domain-suffix
   value: scdn.co
+- type: domain-suffix
+  value: searchlightpictures.com
+- type: domain-suffix
+  value: shanghaidisneyresort.com
 - type: domain-suffix
   value: shopdisney.com
 - type: domain-suffix
@@ -563,9 +687,13 @@ rules:
 - type: domain-suffix
   value: streamingdisney.net
 - type: domain-suffix
+  value: thehulubraintrust.com
+- type: domain-suffix
   value: themarvelexperiencetour.com
 - type: domain-suffix
   value: thestationbymaker.com
+- type: domain-suffix
+  value: thewaltdisneycompany.com
 - type: domain-suffix
   value: thisispolaris.com
 - type: domain-suffix
@@ -615,6 +743,8 @@ rules:
 - type: domain-suffix
   value: tiktokw.us
 - type: domain-suffix
+  value: tokyodisneyresort.jp
+- type: domain-suffix
   value: tospotify.com
 - type: domain-suffix
   value: ttcdn-us.com
@@ -625,6 +755,8 @@ rules:
 - type: domain-suffix
   value: ttwstatic.com
 - type: domain-suffix
+  value: waltdisneystudios.com
+- type: domain-suffix
   value: watchdisneyfe.com
 - type: domain-suffix
   value: watchespn.com
@@ -632,6 +764,8 @@ rules:
   value: wide-youtube.l.google.com
 - type: domain-suffix
   value: withyoutube.com
+- type: domain-suffix
+  value: wwwhuluplus.com
 - type: domain-suffix
   value: youtu.be
 - type: domain-suffix
